@@ -1,3 +1,6 @@
+**! Source of the Dataset !**
+https://www.kaggle.com/datasets/nadyana/flowers/data
+
 # FlowersRecognition
 
 Project for image classification of flowers using PyTorch and `torchvision.datasets.ImageFolder`.
