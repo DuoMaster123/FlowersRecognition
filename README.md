@@ -5,7 +5,7 @@ Project for image classification of flowers using PyTorch and `torchvision.datas
 ## Structure
 
 ```
-Download folder form Kaggle, unzip and name it 'flowers', rememver the position you put it in the disk
+Download folder form Kaggle, unzip and name it 'flowers', remember the position you put it in the disk
 
 FlowersRecognition/
 ├── data/
@@ -23,7 +23,7 @@ FlowersRecognition/
 
 ## Quick start
 
-1. Put your unzipped Kaggle `flowers` folder into `E:/flowers` (or update `config.yaml` -> `data.root_dir` to the actual path).
+1. Put your unzipped Kaggle `flowers` folder into `E:/flowers` (**or update `config.yaml` -> `data.root_dir` to the actual Path min the disk**).
 2. (Optional) Create a virtualenv and install requirements:
    ```
    pip install -r requirements.txt
@@ -31,6 +31,10 @@ FlowersRecognition/
 3. Run training:
    ```
    python src/train.py --config config.yaml
+   ```
+4. Predict the input:
+   ```
+   python src\predict.py --image "C:\Users\HP\Downloads\example.jpg" --model models\checkpoints\best_model_7classes.pth --topk 3  #You can change the Path to the position the image is saved in disk
    ```
 
 The script will:
