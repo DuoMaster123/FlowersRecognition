@@ -1,6 +1,6 @@
 ! Source of the Dataset ! --> https://www.kaggle.com/datasets/nadyana/flowers
 
-# Note: I ran this program on Window, so I can't sure about MacOS or Linux
+*** Note: I ran this program on Window, so I can't sure about MacOS or Linux ***
 
 # FlowersRecognition
 
