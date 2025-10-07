@@ -32,12 +32,12 @@ FlowersRecognition/
 
 ## Quick start
 
-1. Put your unzipped Kaggle `flowers` folder into `E:/flowers` (or update `config.yaml` -> paste your path).
-2. (Optional) Create a virtualenv and install requirements:
+1. Put your unzipped Kaggle `flowers` folder into `E:/flowers` (or update `config.yaml` -> paste your path). The the folder (which you clone this repository) in VScode.
+2. (Optional) Create a virtualenv and install requirements (run in VScode Terminal):
    ```
    pip install -r requirements.txt
    ```
-3. Run training: Open the folder in VScode and run this command in Terminal
+3. Run training, run this command in VScode Terminal (note that it might take a long time depending on your Laptop/PC configuration - usually 2 hours)
    ```
    python src/train.py --config config.yaml  
    ```
