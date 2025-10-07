@@ -9,7 +9,7 @@ Project for image classification of flowers using PyTorch and `torchvision.datas
 ## Structure
 
 ```
-Download folder form Kaggle, unzip and name it 'flowers', remember the position you put it in the disk
+Download folder form Kaggle, unzip and name it 'flowers', remember the position you put it in the local disk
 
 Clone this Github repository, the folder's structure is as follow:
 
@@ -51,6 +51,6 @@ The script will:
    ```
    python src/predict.py --image "C:\Users\HP\Downloads\example.jpg" --model models\checkpoints\best_model_7classes.pth --threshold 0.7
    ```
-- You can change the "C:\...." to the position of the image you use for the prediction (in your folder)
+- You can change the `C:\....` to the position of the image you use for the prediction (in your folder)
 - Threshold = 0.5 → more lenient (accepts more images, but higher risk of incorrect predictions)
 - Threshold = 0.7 → more strict (only accepts when the model is more confident) --> You should use this when running the prediction command
