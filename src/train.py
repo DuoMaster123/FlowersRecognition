@@ -4,17 +4,22 @@ import yaml
 import random
 import numpy as np
 from tqdm import tqdm
+from collections import Counter
 
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms, models
 
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, ConfusionMatrixDisplay
+from sklearn.metrics import (
+    accuracy_score, confusion_matrix, classification_report,
+    ConfusionMatrixDisplay, precision_score, recall_score, f1_score
+)
 import matplotlib.pyplot as plt
 import pandas as pd
-from collections import Counter
 
+
+# ---------------------- UTILS ----------------------
 def set_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -22,22 +27,29 @@ def set_seed(seed):
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
+
 def load_config(path):
     with open(path, 'r') as f:
         return yaml.safe_load(f)
 
+
+# ---------------------- DATA ----------------------
 def prepare_dataloaders(root_dir, img_size, batch_size, val_split, num_workers, seed):
     transform_train = transforms.Compose([
         transforms.RandomResizedCrop(img_size),
         transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+        transforms.RandomVerticalFlip(),
+        transforms.RandomRotation(15),
+        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3),
         transforms.ToTensor(),
-        transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])
+        transforms.Normalize([0.485, 0.456, 0.406],
+                             [0.229, 0.224, 0.225])
     ])
     transform_val = transforms.Compose([
         transforms.Resize((img_size, img_size)),
         transforms.ToTensor(),
-        transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225])
+        transforms.Normalize([0.485, 0.456, 0.406],
+                             [0.229, 0.224, 0.225])
     ])
 
     full_dataset = datasets.ImageFolder(root=root_dir, transform=transform_train)
@@ -49,28 +61,36 @@ def prepare_dataloaders(root_dir, img_size, batch_size, val_split, num_workers, 
     train_ds, val_ds = random_split(full_dataset, [train_size, val_size], generator=generator)
     val_ds.dataset.transform = transform_val
 
+    # In ra thông tin phân bố lớp
+    train_counts = Counter([full_dataset.targets[i] for i in train_ds.indices])
+    val_counts = Counter([full_dataset.targets[i] for i in val_ds.indices])
+    print(f"Train size: {train_size} | Val size: {val_size}")
+    print("Train class dist:", {full_dataset.classes[k]: v for k, v in train_counts.items()})
+    print("Val class dist:", {full_dataset.classes[k]: v for k, v in val_counts.items()})
+
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-    class_names = full_dataset.classes
-    return train_loader, val_loader, class_names
+    return train_loader, val_loader, full_dataset.classes
 
+
+# ---------------------- MODEL ----------------------
 def build_model(model_cfg, num_classes):
     model_type = model_cfg.get("type", "resnet18").lower()
     pretrained = model_cfg.get("pretrained", True)
 
     if model_type == "resnet18":
-        # torchvision>=0.14 dùng weights thay cho pretrained
         try:
             model = models.resnet18(weights='IMAGENET1K_V1' if pretrained else None)
         except:
             model = models.resnet18(pretrained=pretrained)
-        num_ftrs = model.fc.in_features
-        model.fc = nn.Linear(num_ftrs, num_classes)
+        model.fc = nn.Linear(model.fc.in_features, num_classes)
     else:
         raise ValueError(f"Unsupported model type: {model_type}")
     return model
 
+
+# ---------------------- TRAIN ----------------------
 def train_one_epoch(model, loader, criterion, optimizer, device):
     model.train()
     losses, preds, targets = [], [], []
@@ -86,6 +106,7 @@ def train_one_epoch(model, loader, criterion, optimizer, device):
         targets.extend(labels.cpu().numpy())
     return np.mean(losses), accuracy_score(targets, preds)
 
+
 def validate(model, loader, criterion, device):
     model.eval()
     losses, preds, targets = [], [], []
@@ -99,26 +120,39 @@ def validate(model, loader, criterion, device):
             targets.extend(labels.cpu().numpy())
     return np.mean(losses), accuracy_score(targets, preds), preds, targets
 
-def plot_history(history, out_path):
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    plt.figure(figsize=(8,4))
-    plt.subplot(1,2,1)
+
+# ---------------------- PLOTS ----------------------
+def plot_history(history, out_dir):
+    os.makedirs(out_dir, exist_ok=True)
+    plt.figure(figsize=(8, 4))
+    plt.subplot(1, 2, 1)
     plt.plot(history['train_loss'], label='Train Loss')
     plt.plot(history['val_loss'], label='Val Loss')
     plt.legend(); plt.title('Loss')
-    plt.subplot(1,2,2)
+
+    plt.subplot(1, 2, 2)
     plt.plot(history['train_acc'], label='Train Acc')
     plt.plot(history['val_acc'], label='Val Acc')
     plt.legend(); plt.title('Accuracy')
     plt.tight_layout()
-    plt.savefig(out_path)
+    plt.savefig(os.path.join(out_dir, 'training_history.png'))
     plt.close()
+
+    # Overfit gap
+    plt.figure(figsize=(6, 4))
+    plt.plot(np.array(history['train_acc']) - np.array(history['val_acc']))
+    plt.title("Overfitting Gap (Train Acc - Val Acc)")
+    plt.xlabel("Epoch"); plt.ylabel("Gap")
+    plt.tight_layout()
+    plt.savefig(os.path.join(out_dir, 'overfitting_gap.png'))
+    plt.close()
+
 
 def save_confusion_matrix(targets, preds, classes, out_path):
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     cm = confusion_matrix(targets, preds)
     disp = ConfusionMatrixDisplay(cm, display_labels=classes)
-    fig, ax = plt.subplots(figsize=(8,6))
+    fig, ax = plt.subplots(figsize=(8, 6))
     disp.plot(ax=ax, cmap='Blues', xticks_rotation='vertical')
     plt.title('Confusion Matrix')
     plt.tight_layout()
@@ -126,39 +160,13 @@ def save_confusion_matrix(targets, preds, classes, out_path):
     plt.close()
     return cm
 
-def save_class_distribution(root_dir, classes, out_path):
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    counts = {c: len(os.listdir(os.path.join(root_dir, c))) for c in classes}
-    df = pd.DataFrame(list(counts.items()), columns=['class','count'])
-    plt.figure(figsize=(6,4))
-    plt.bar(df['class'], df['count'])
-    plt.title('Class distribution')
-    plt.xticks(rotation=30)
-    plt.tight_layout()
-    plt.savefig(out_path)
-    plt.close()
-    return counts
 
-def write_training_summary(out_path, cfg, classes, history, best_val_acc, per_class_acc, class_counts):
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    with open(out_path, 'w', encoding='utf-8') as f:
-        f.write("===== TRAINING SUMMARY =====\n")
-        f.write(f"Model: {cfg['model'].get('type','resnet18')}\n")
-        f.write(f"Classes: {classes}\n")
-        f.write(f"Epochs: {cfg['train']['epochs']}\n")
-        f.write(f"Best Val Acc: {best_val_acc:.4f}\n\n")
-        f.write("Per-Class Accuracy:\n")
-        for cls, acc in per_class_acc.items():
-            f.write(f"- {cls}: {acc*100:.2f}%\n")
-        f.write("\nImage count per class:\n")
-        for cls, cnt in class_counts.items():
-            f.write(f"- {cls}: {cnt}\n")
-
+# ---------------------- MAIN ----------------------
 def main(args):
     cfg = load_config(args.config)
     set_seed(cfg['train'].get('seed', 42))
 
-    device = torch.device('cuda' if (torch.cuda.is_available() and cfg['train']['device']=='cuda') else 'cpu')
+    device = torch.device('cuda' if (torch.cuda.is_available() and cfg['train']['device'] == 'cuda') else 'cpu')
     print("Using device:", device)
 
     train_loader, val_loader, classes = prepare_dataloaders(
@@ -166,24 +174,35 @@ def main(args):
         cfg['data']['batch_size'], cfg['train']['val_split'],
         cfg['data'].get('num_workers', 4), cfg['train'].get('seed', 42)
     )
-    print("Classes:", classes)
 
     model = build_model(cfg['model'], num_classes=len(classes)).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=cfg['train']['learning_rate'])
 
+    # ✅ Sửa đoạn scheduler (gọn, không lỗi, không tốn thêm tài nguyên)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2)
+
     best_val_acc = 0.0
-    history = {'train_loss':[], 'val_loss':[], 'train_acc':[], 'val_acc':[]}
+    history = {'train_loss': [], 'val_loss': [], 'train_acc': [], 'val_acc': []}
 
     for epoch in range(cfg['train']['epochs']):
-        print(f"Epoch {epoch+1}/{cfg['train']['epochs']}")
+        print(f"\nEpoch {epoch+1}/{cfg['train']['epochs']}")
         train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
         val_loss, val_acc, _, _ = validate(model, val_loader, criterion, device)
-        print(f"Train: loss={train_loss:.4f}, acc={train_acc:.4f} | Val: loss={val_loss:.4f}, acc={val_acc:.4f}")
+
+        # ✅ Thêm in ra khi giảm learning rate
+        prev_lr = optimizer.param_groups[0]['lr']
+        scheduler.step(val_acc)
+        new_lr = optimizer.param_groups[0]['lr']
+        if new_lr < prev_lr:
+            print(f"🔽 Learning rate reduced from {prev_lr:.6f} → {new_lr:.6f}")
+
+        overfit_gap = train_acc - val_acc
+        print(f"Train: loss={train_loss:.4f}, acc={train_acc:.4f} | Val: loss={val_loss:.4f}, acc={val_acc:.4f} | Overfit gap={overfit_gap:.4f}")
 
         history['train_loss'].append(train_loss)
-        history['train_acc'].append(train_acc)
         history['val_loss'].append(val_loss)
+        history['train_acc'].append(train_acc)
         history['val_acc'].append(val_acc)
 
         if val_acc > best_val_acc:
@@ -196,25 +215,39 @@ def main(args):
             }, "models/checkpoints/best_model_7classes.pth")
             print("✅ Saved new best model.")
 
+    # Final evaluation
     val_loss, val_acc, preds, targets = validate(model, val_loader, criterion, device)
-    print(f"Final Val Accuracy: {val_acc:.4f}")
+    print(f"\nFinal Val Accuracy: {val_acc:.4f}")
 
     os.makedirs('outputs/plots', exist_ok=True)
     os.makedirs('outputs/reports', exist_ok=True)
 
-    plot_history(history, 'outputs/plots/training_history.png')
+    plot_history(history, 'outputs/plots')
     cm = save_confusion_matrix(targets, preds, classes, 'outputs/plots/confusion_matrix.png')
-    class_counts = save_class_distribution(cfg['data']['root_dir'], classes, 'outputs/plots/class_distribution.png')
 
-    per_class_acc = {classes[i]: cm[i,i]/cm[i].sum() if cm[i].sum()>0 else 0.0 for i in range(len(classes))}
+    # Metrics
+    precision = precision_score(targets, preds, average='macro', zero_division=0)
+    recall = recall_score(targets, preds, average='macro', zero_division=0)
+    f1 = f1_score(targets, preds, average='macro', zero_division=0)
+    print(f"\nPrecision={precision:.4f} | Recall={recall:.4f} | F1={f1:.4f}")
+
+    per_class_acc = {classes[i]: cm[i, i] / cm[i].sum() if cm[i].sum() > 0 else 0.0 for i in range(len(classes))}
     pd.DataFrame(history).to_csv('outputs/reports/training_log.csv', index=False)
-    write_training_summary('outputs/reports/training_summary.txt', cfg, classes, history, best_val_acc, per_class_acc, class_counts)
+
+    with open('outputs/reports/training_summary.txt', 'w', encoding='utf-8') as f:
+        f.write("===== TRAINING SUMMARY =====\n")
+        f.write(f"Best Val Acc: {best_val_acc:.4f}\n")
+        f.write(f"Precision: {precision:.4f}\nRecall: {recall:.4f}\nF1-score: {f1:.4f}\n\n")
+        f.write("Per-Class Accuracy:\n")
+        for cls, acc in per_class_acc.items():
+            f.write(f"- {cls}: {acc*100:.2f}%\n")
 
     report = classification_report(targets, preds, target_names=classes, digits=4)
-    with open('outputs/reports/classification_report.txt','w',encoding='utf-8') as f:
+    with open('outputs/reports/classification_report.txt', 'w', encoding='utf-8') as f:
         f.write(report)
 
-    print("✅ Training complete! Reports saved in outputs/")
+    print("\n✅ Training complete! Reports saved in outputs/")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

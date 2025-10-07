@@ -8,7 +8,7 @@ import os
 def load_model(model_path):
     checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
 
-    # Lấy danh sách lớp từ checkpoint (an toàn, không cần sửa tay)
+    # Lấy danh sách lớp từ checkpoint (nếu có)
     if "classes" in checkpoint:
         class_names = checkpoint["classes"]
         num_classes = len(class_names)
@@ -31,8 +31,11 @@ def load_model(model_path):
     return model, class_names
 
 
-def predict_image(model, image_path, class_names, topk=3):
-    # Transform giống lúc train
+def predict_image(model, image_path, class_names, topk=3, threshold=0.6):
+    """
+    Predict the flower type in the image.
+    If confidence is below the threshold → unable to classify
+    """
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
@@ -50,6 +53,11 @@ def predict_image(model, image_path, class_names, topk=3):
 
     top_probs = top_probs[0].tolist()
     top_indices = top_indices[0].tolist()
+
+    # Nếu xác suất cao nhất nhỏ hơn threshold -> không nhận diện được
+    if top_probs[0] < threshold:
+        return [("❌ Cannot predict the image, it could not be flowers or incorrect type of the initial 7 flowers in the dataset", top_probs[0])]
+
     results = [(class_names[i], top_probs[idx]) for idx, i in enumerate(top_indices)]
     return results
 
@@ -59,6 +67,7 @@ def main():
     parser.add_argument('--image', type=str, required=True, help='Path to image file')
     parser.add_argument('--model', type=str, required=True, help='Path to trained model (.pth)')
     parser.add_argument('--topk', type=int, default=3, help='Show top-K predictions')
+    parser.add_argument('--threshold', type=float, default=0.6, help='Confidence threshold (0–1)')
     args = parser.parse_args()
 
     if not os.path.exists(args.image):
@@ -73,7 +82,7 @@ def main():
     model, class_names = load_model(args.model)
 
     print(f"🔹 Predicting image: {args.image}")
-    results = predict_image(model, args.image, class_names, args.topk)
+    results = predict_image(model, args.image, class_names, args.topk, args.threshold)
 
     print("\n✅ Prediction results:")
     for cls, prob in results:

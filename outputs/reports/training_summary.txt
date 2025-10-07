@@ -1,23 +1,14 @@
 ===== TRAINING SUMMARY =====
-Model: resnet18
-Classes: ['bellflower', 'daisy', 'dandelion', 'lotus', 'rose', 'sunflower', 'tulip']
-Epochs: 12
-Best Val Acc: 0.9429
+Best Val Acc: 0.9598
+Precision: 0.9598
+Recall: 0.9594
+F1-score: 0.9592
 
 Per-Class Accuracy:
-- bellflower: 92.35%
-- daisy: 82.03%
-- dandelion: 93.67%
-- lotus: 94.97%
-- rose: 84.72%
-- sunflower: 95.10%
-- tulip: 86.60%
-
-Image count per class:
-- bellflower: 1600
-- daisy: 1600
-- dandelion: 1600
-- lotus: 1600
-- rose: 1600
-- sunflower: 1600
-- tulip: 1600
+- bellflower: 99.39%
+- daisy: 93.46%
+- dandelion: 98.67%
+- lotus: 97.93%
+- rose: 94.35%
+- sunflower: 97.41%
+- tulip: 90.34%
