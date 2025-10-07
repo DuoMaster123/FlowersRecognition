@@ -1,3 +1,5 @@
+! Source of the Dataset ! --> https://www.kaggle.com/datasets/nadyana/flowers
+
 # FlowersRecognition
 
 Project for image classification of flowers using PyTorch and `torchvision.datasets.ImageFolder`.
@@ -5,16 +7,21 @@ Project for image classification of flowers using PyTorch and `torchvision.datas
 ## Structure
 
 ```
-Download folder form Kaggle, unzip and name it 'flowers', rememver the position you put it in the disk
+Download folder form Kaggle, unzip and name it 'flowers', remember the position you put it in the disk
+
+Clone this Github repository, the folder's structure is as follow:
 
 FlowersRecognition/
 ├── data/
-│   └── raw/flowers            
+│   └── raw/flowers            # You can link the the folder 'flowers' using File Explorer's path 
 ├── notebooks/
+├── outputs/
+│   └──plots/
+│   └──reports/
 ├── src/
 │   └── train.py               # Training script using ImageFolder + ResNet18
 ├── models/
-│   └── checkpoints/
+│   └── checkpoints/           # Note that after training completed, there will be some more files to be created
 ├── outputs/
 │   └── logs/plots
 ├── requirements.txt
@@ -23,17 +30,17 @@ FlowersRecognition/
 
 ## Quick start
 
-1. Put your unzipped Kaggle `flowers` folder into `E:/flowers` (or update `config.yaml` -> `data.root_dir` to the actual path).
+1. Put your unzipped Kaggle `flowers` folder into `E:/flowers` (or update `config.yaml` -> paste your path).
 2. (Optional) Create a virtualenv and install requirements:
    ```
    pip install -r requirements.txt
    ```
-3. Run training:
+3. Run training: Open the folder in VScode and run this command in Terminal
    ```
-   python src/train.py --config config.yaml
+   python src/train.py --config config.yaml  
    ```
 
 The script will:
 - Load images with `torchvision.datasets.ImageFolder`
 - Split train/val
-- Train a ResNet18 for a few epochs and save the best checkpoint to `models/checkpoints/`
+- Train a ResNet18 for 12 epochs then save the best checkpoint to `models/checkpoints/` and print out reports
