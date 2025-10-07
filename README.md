@@ -1,5 +1,7 @@
 ! Source of the Dataset ! --> https://www.kaggle.com/datasets/nadyana/flowers
 
+# Note: I ran this program on Window, so I can't sure about MacOS or Linux
+
 # FlowersRecognition
 
 Project for image classification of flowers using PyTorch and `torchvision.datasets.ImageFolder`.
@@ -44,3 +46,11 @@ The script will:
 - Load images with `torchvision.datasets.ImageFolder`
 - Split train/val
 - Train a ResNet18 for 12 epochs then save the best checkpoint to `models/checkpoints/` and print out reports
+
+4. Predict other inputs:
+   ```
+   python src/predict.py --image "C:\Users\HP\Downloads\example.jpg" --model models\checkpoints\best_model_7classes.pth --threshold 0.7
+   ```
+- You can change the "C:\...." to the position of the image you use for the prediction (in your folder)
+- Threshold = 0.5 → more lenient (accepts more images, but higher risk of incorrect predictions)
+- Threshold = 0.7 → more strict (only accepts when the model is more confident) --> You should use this when running the prediction command
