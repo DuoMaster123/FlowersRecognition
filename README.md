@@ -1,9 +1,9 @@
-## IMPORTANT: 
+### IMPORTANT: 
 - This repository does not include the file `best_model_7classes.pth`, which stores the trained model weights.
 - The `.pth` file is generated after training the model and is used to save and later reload the model’s learned parameters for inference or fine-tuning.
 - Due to GitHub’s file size limit (100 MB), this file cannot be uploaded to the repository. To obtain it, you need to train the model locally or on a server, which will automatically generate the .pth file after training. Or you can download it through: https://drive.google.com/file/d/1LEaISkJGsAKU1Z8VCFRnuLD5RCtoBsCO/view?usp=sharing
 - Please use usth.edu.vn mail to access. After downloading, create folder `FlowersRecogniton\models\checkpoints\best_model_7classes.pth`
-```
+
 ! Source of the Dataset ! --> https://www.kaggle.com/datasets/nadyana/flowers
 
 *** Note: I ran this program on Window, so I can't sure about MacOS or Linux ***
