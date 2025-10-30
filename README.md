@@ -1,3 +1,9 @@
+## IMPORTANT: 
+- This repository does not include the file `best_model_7classes.pth`, which stores the trained model weights.
+- The `.pth` file is generated after training the model and is used to save and later reload the model’s learned parameters for inference or fine-tuning.
+- Due to GitHub’s file size limit (100 MB), this file cannot be uploaded to the repository. To obtain it, you need to train the model locally or on a server, which will automatically generate the .pth file after training. Or you can download it through: https://drive.google.com/file/d/1LEaISkJGsAKU1Z8VCFRnuLD5RCtoBsCO/view?usp=sharing
+- Please use usth.edu.vn mail to access. After downloading, create folder `FlowersRecogniton\models\checkpoints\best_model_7classes.pth`
+```
 ! Source of the Dataset ! --> https://www.kaggle.com/datasets/nadyana/flowers
 
 *** Note: I ran this program on Window, so I can't sure about MacOS or Linux ***
@@ -49,8 +55,8 @@ The script will:
 
 4. Predict other inputs:
    ```
-   python src/predict.py --image "C:\Users\HP\Downloads\example.jpg" --model models\checkpoints\best_model_7classes.pth --threshold 0.7
+   python src/predict.py --image "C:\Users\...\Downloads\example.jpg" --model models\checkpoints\best_model_7classes.pth --threshold 0.7
    ```
-- You can change the `C:\....` to the position of the image you use for the prediction (in your folder)
+- You can change the `C:\....` to the position of the image you use for the prediction (inside your file explorer)
 - Threshold = 0.5 → more lenient (accepts more images, but higher risk of incorrect predictions)
 - Threshold = 0.7 → more strict (only accepts when the model is more confident) --> You should use this when running the prediction command
