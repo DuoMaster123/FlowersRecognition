@@ -20,14 +20,13 @@ Download folder form Kaggle, unzip and name it 'flowers', remember the position 
 Clone this Github repository, the folder's structure is as follow:
 
 FlowersRecognition/
-├── data/
-│   └── raw/flowers            # You can link the the folder 'flowers' using File Explorer's path 
 ├── notebooks/
 ├── outputs/
 │   └──plots/
 │   └──reports/
 ├── src/
 │   └── train.py               # Training script using ImageFolder + ResNet18
+│   └── predict.py
 ├── models/
 │   └── checkpoints/           # Note that after training completed, there will be some more files to be created
 ├── outputs/
