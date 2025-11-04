@@ -1,14 +1,14 @@
 ===== TRAINING SUMMARY =====
-Best Val Acc: 0.9598
-Precision: 0.9598
-Recall: 0.9594
-F1-score: 0.9592
+Best Val Acc: 0.9638
+Precision: 0.9640
+Recall: 0.9634
+F1-score: 0.9635
 
 Per-Class Accuracy:
-- bellflower: 99.39%
-- daisy: 93.46%
-- dandelion: 98.67%
-- lotus: 97.93%
-- rose: 94.35%
-- sunflower: 97.41%
-- tulip: 90.34%
+- bellflower: 99.69%
+- daisy: 94.77%
+- dandelion: 97.00%
+- lotus: 97.04%
+- rose: 95.02%
+- sunflower: 97.12%
+- tulip: 93.77%

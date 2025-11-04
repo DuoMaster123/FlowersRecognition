@@ -14,4 +14,3 @@ train:
 model:
   type: "resnet18"
   pretrained: true             
-  num_classes: 7               

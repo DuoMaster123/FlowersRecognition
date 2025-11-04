@@ -176,7 +176,7 @@ def main(args):
     )
 
     model = build_model(cfg['model'], num_classes=len(classes)).to(device)
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
     optimizer = optim.Adam(model.parameters(), lr=cfg['train']['learning_rate'])
 
     # ✅ Sửa đoạn scheduler (gọn, không lỗi, không tốn thêm tài nguyên)
