@@ -18,7 +18,7 @@ Project for image classification of flowers using PyTorch and `torchvision.datas
 Download folder form Kaggle, unzip and name it 'flowers', remember the position you put it in the local disk
 
 Clone this Github repository, the folder's structure is as follow:
-c:\Users\HP\AppData\Local\Packages\MicrosoftWindows.Client.Core_cw5n1h2txyewy\TempState\ScreenClip\{D4F9CB37-B0A7-4EF9-9BFA-C1C96DA84033}.png
+![Overall Structure of the Project](Project_Structures.png)
 
 ## Quick start
 
