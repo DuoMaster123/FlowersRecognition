@@ -18,6 +18,7 @@ Project for image classification of flowers using PyTorch and `torchvision.datas
 Download folder form Kaggle, unzip and name it 'flowers', remember the position you put it in the local disk
 
 Clone this Github repository, the folder's structure is as follow:
+
 ![Overall Structure of the Project](Project_Structures.png)
 
 ## Quick start
@@ -27,7 +28,7 @@ Clone this Github repository, the folder's structure is as follow:
    ```
    pip install -r requirements.txt
    ```
-3. Run training, run this command in VScode Terminal (note that it might take a long time depending on your Laptop/PC configuration - usually 2 hours)
+3. Run training, run this command in VScode Terminal (note that it might take a long time depending on your Laptop/PC configuration - usually 1.5 hour) - If you already downloaded the `best_model_7classes.pth` file at first, you can skip this step.
    ```
    python src/train.py --config config.yaml  
    ```
