@@ -12,9 +12,7 @@ init(autoreset=True)
 def fancy_line(char="─", length=45, color=Fore.LIGHTMAGENTA_EX):
     return color + char * length + Style.RESET_ALL
 
-# ANSI 24-bit True Color cho neon cyan
 def neon_cyan(text):
-    # #70f5ee → RGB(112, 245, 238)
     return f"\033[38;2;112;245;238m{text}\033[0m"
 
 # ================== MODEL LOADING ===================
@@ -106,10 +104,10 @@ def main():
         print(neon_cyan("Top predictions:"))
         for idx, (cls, prob) in enumerate(results):
             if idx == 0:
-                color = Fore.RED      # Kết quả đầu tiên đỏ
+                color = Fore.YELLOW      
             else:
-                color = Fore.YELLOW   # Hai kết quả sau vàng
-            bar = "█" * int(prob * 20)  # visual probability bar
+                color = Fore.RED   
+            bar = "█" * int(prob * 20)  
             print(f"  {color}{cls:12s} : {prob*100:6.2f}% |{bar}{Style.RESET_ALL}")
     print(fancy_line())
 
