@@ -21,6 +21,7 @@ import pandas as pd
 
 # ---------------------- UTILS ----------------------
 def set_seed(seed):
+    """Set all random seeds for reproducibility."""
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -29,12 +30,14 @@ def set_seed(seed):
 
 
 def load_config(path):
+    """Load configuration file in YAML format."""
     with open(path, 'r') as f:
         return yaml.safe_load(f)
 
 
 # ---------------------- DATA ----------------------
 def prepare_dataloaders(root_dir, img_size, batch_size, val_split, num_workers, seed):
+    """Create train and validation dataloaders with augmentation and normalization."""
     transform_train = transforms.Compose([
         transforms.RandomResizedCrop(img_size),
         transforms.RandomHorizontalFlip(),
@@ -61,12 +64,12 @@ def prepare_dataloaders(root_dir, img_size, batch_size, val_split, num_workers, 
     train_ds, val_ds = random_split(full_dataset, [train_size, val_size], generator=generator)
     val_ds.dataset.transform = transform_val
 
-    # In ra thông tin phân bố lớp
+    # Print dataset statistics
     train_counts = Counter([full_dataset.targets[i] for i in train_ds.indices])
     val_counts = Counter([full_dataset.targets[i] for i in val_ds.indices])
     print(f"Train size: {train_size} | Val size: {val_size}")
-    print("Train class dist:", {full_dataset.classes[k]: v for k, v in train_counts.items()})
-    print("Val class dist:", {full_dataset.classes[k]: v for k, v in val_counts.items()})
+    print("Train class distribution:", {full_dataset.classes[k]: v for k, v in train_counts.items()})
+    print("Val class distribution:", {full_dataset.classes[k]: v for k, v in val_counts.items()})
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
@@ -76,13 +79,14 @@ def prepare_dataloaders(root_dir, img_size, batch_size, val_split, num_workers, 
 
 # ---------------------- MODEL ----------------------
 def build_model(model_cfg, num_classes):
+    """Build the model based on the configuration."""
     model_type = model_cfg.get("type", "resnet18").lower()
     pretrained = model_cfg.get("pretrained", True)
 
     if model_type == "resnet18":
         try:
             model = models.resnet18(weights='IMAGENET1K_V1' if pretrained else None)
-        except:
+        except Exception:
             model = models.resnet18(pretrained=pretrained)
         model.fc = nn.Linear(model.fc.in_features, num_classes)
     else:
@@ -123,32 +127,37 @@ def validate(model, loader, criterion, device):
 
 # ---------------------- PLOTS ----------------------
 def plot_history(history, out_dir):
+    """Plot training and validation loss/accuracy."""
     os.makedirs(out_dir, exist_ok=True)
     plt.figure(figsize=(8, 4))
     plt.subplot(1, 2, 1)
     plt.plot(history['train_loss'], label='Train Loss')
     plt.plot(history['val_loss'], label='Val Loss')
-    plt.legend(); plt.title('Loss')
+    plt.legend()
+    plt.title('Loss')
 
     plt.subplot(1, 2, 2)
     plt.plot(history['train_acc'], label='Train Acc')
     plt.plot(history['val_acc'], label='Val Acc')
-    plt.legend(); plt.title('Accuracy')
+    plt.legend()
+    plt.title('Accuracy')
     plt.tight_layout()
     plt.savefig(os.path.join(out_dir, 'training_history.png'))
     plt.close()
 
-    # Overfit gap
+    # Overfitting visualization
     plt.figure(figsize=(6, 4))
     plt.plot(np.array(history['train_acc']) - np.array(history['val_acc']))
     plt.title("Overfitting Gap (Train Acc - Val Acc)")
-    plt.xlabel("Epoch"); plt.ylabel("Gap")
+    plt.xlabel("Epoch")
+    plt.ylabel("Gap")
     plt.tight_layout()
     plt.savefig(os.path.join(out_dir, 'overfitting_gap.png'))
     plt.close()
 
 
 def save_confusion_matrix(targets, preds, classes, out_path):
+    """Save confusion matrix plot to file."""
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     cm = confusion_matrix(targets, preds)
     disp = ConfusionMatrixDisplay(cm, display_labels=classes)
@@ -178,8 +187,6 @@ def main(args):
     model = build_model(cfg['model'], num_classes=len(classes)).to(device)
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)
     optimizer = optim.Adam(model.parameters(), lr=cfg['train']['learning_rate'])
-
-    # ✅ Sửa đoạn scheduler (gọn, không lỗi, không tốn thêm tài nguyên)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2)
 
     best_val_acc = 0.0
@@ -190,15 +197,16 @@ def main(args):
         train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
         val_loss, val_acc, _, _ = validate(model, val_loader, criterion, device)
 
-        # ✅ Thêm in ra khi giảm learning rate
         prev_lr = optimizer.param_groups[0]['lr']
         scheduler.step(val_acc)
         new_lr = optimizer.param_groups[0]['lr']
         if new_lr < prev_lr:
-            print(f"🔽 Learning rate reduced from {prev_lr:.6f} → {new_lr:.6f}")
+            print(f"Learning rate reduced from {prev_lr:.6f} to {new_lr:.6f}")
 
         overfit_gap = train_acc - val_acc
-        print(f"Train: loss={train_loss:.4f}, acc={train_acc:.4f} | Val: loss={val_loss:.4f}, acc={val_acc:.4f} | Overfit gap={overfit_gap:.4f}")
+        print(f"Train: loss={train_loss:.4f}, acc={train_acc:.4f} | "
+              f"Val: loss={val_loss:.4f}, acc={val_acc:.4f} | "
+              f"Overfit gap={overfit_gap:.4f}")
 
         history['train_loss'].append(train_loss)
         history['val_loss'].append(val_loss)
@@ -213,11 +221,11 @@ def main(args):
                 'optimizer_state_dict': optimizer.state_dict(),
                 'classes': classes
             }, "models/checkpoints/best_model_7classes.pth")
-            print("✅ Saved new best model.")
+            print("Saved new best model.")
 
     # Final evaluation
     val_loss, val_acc, preds, targets = validate(model, val_loader, criterion, device)
-    print(f"\nFinal Val Accuracy: {val_acc:.4f}")
+    print(f"\nFinal Validation Accuracy: {val_acc:.4f}")
 
     os.makedirs('outputs/plots', exist_ok=True)
     os.makedirs('outputs/reports', exist_ok=True)
@@ -246,7 +254,7 @@ def main(args):
     with open('outputs/reports/classification_report.txt', 'w', encoding='utf-8') as f:
         f.write(report)
 
-    print("\n✅ Training complete! Reports saved in outputs/")
+    print("\nTraining complete. Reports saved in outputs/.")
 
 
 if __name__ == "__main__":
@@ -254,3 +262,4 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, default="config.yaml")
     args = parser.parse_args()
     main(args)
+    
